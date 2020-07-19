@@ -3,25 +3,37 @@ const fsp = require(`fs`).promises;
 const readline = require(`readline`);
 const puppeteer = require(`puppeteer`);
 
-const termcode = `202110`;
-const CRN = `14791`;
-const lastFile = `last.txt`;
+const coursesFile = `./courses.json`
+const courses = require(coursesFile);
+
 const timeoutMins = 5;
 
-const check = async (browser, term, crn) => {
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function check(browser, term, crn) {
 	const page = await browser.newPage();
 	await page.goto(`https://central.carleton.ca/prod/bwysched.p_select_term?wsea_code=EXT`);
 	await page.select(`#term_code`, term);
+
+	await sleep(2000);
 	await Promise.all([
 		page.waitForNavigation(),
 		await page.click(`input[type="submit"]`),
 	]);
 
+	await sleep(2000);
+
 	await page.$eval(`#crn_id`, (el, value) => el.value = value, crn);
+
+	await sleep(2000);
 	await Promise.all([
 		page.waitForNavigation(),
 		await page.click(`input[value="Search"]`),
 	]);
+
+	await sleep(2000);
 
 	const msg = await page.$eval(`table tr:nth-child(4) td:nth-child(2)`, el => el.textContent);
 	const courseCode = (await page.$eval(`table tr:nth-child(4) td:nth-child(4)`, el => el.textContent)).trim();
@@ -30,6 +42,24 @@ const check = async (browser, term, crn) => {
 	return [msg, courseCode];
 };
 
+async function processCourses(bot, browser)
+{
+	Object.keys(courses).forEach(term => {
+		courses[term].forEach(async course => {
+			const [currentStatus, courseName] = await check(browser, term, course.code);
+
+			console.log(`${new Date().toISOString()}: ${currentStatus}`);
+
+			if (currentStatus != course.status) {
+				console.log(`Sending new status ${courseName}: ${currentStatus}`);
+				await bot.sendSuccessMessage(course.status, currentStatus, courseName);
+				course.status = currentStatus;
+				fsp.writeFile(coursesFile, JSON.stringify(courses));
+			}
+		})
+	})
+}
+
 (async () => {
 	const rl = readline.createInterface({
 		input: process.stdin,
@@ -37,29 +67,35 @@ const check = async (browser, term, crn) => {
 	});
 
 	rl.on(`line`, (msg) => {
-		if (msg == `q`) {process.exit(0);}
+		if (msg == `q`) { process.exit(0); }
 	});
 
 	const resetFlag = process.argv.slice(2)[0];
-	let lastKnown = await fsp.readFile(lastFile, { encoding: `utf8`, flag: resetFlag && resetFlag === `--reset` ? `w+` : `a+` });
+	if (resetFlag === "--reset") {
+		Object.values(courses).forEach(term => {
+			term.forEach(course => {
+				course.status = "";
+			})
+		})
+		fsp.writeFile(coursesFile, JSON.stringify(courses));
+	}
 
 	const bot = new ClassBot();
 	await bot.initBot();
-	const browser = await puppeteer.launch();
+	// const browser = await puppeteer.launch();
+	const browser = await puppeteer.launch({
+		executablePath: 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+		headless: false,
+		args: [
+			'--auto-open-devtools-for-tabs',
+		]
+	});
 	console.log(`startup ok`);
 
+	await processCourses(bot, browser);
+
 	setInterval(async () => {
-		const [currentStatus, course] = await check(browser, termcode, CRN);
-		console.log(`${new Date(Date.now()).toISOString()}: ${currentStatus}`);
-
-		if (currentStatus != lastKnown) {
-			console.log(`Sending new status ${currentStatus}`);
-
-			await fsp.writeFile(lastFile, currentStatus);
-			await bot.sendSuccessMessage(lastKnown, currentStatus, course);
-			lastKnown = currentStatus;
-		}
-		process.exit(0);
-	}, timeoutMins * 1000);
+		await processCourses(bot, browser)
+	}, timeoutMins * 60000);
 
 })().catch(e => console.error(e));
