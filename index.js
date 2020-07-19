@@ -1,13 +1,13 @@
 const ClassBot = require(`./bot.js`);
 const fsp = require(`fs`).promises;
-const readline = require(`readline`);
 const puppeteer = require(`puppeteer`);
 
-const coursesFile = `./courses.json`
+const coursesFile = `./courses.json`;
 const courses = require(coursesFile);
 
 const timeoutMins = 5;
 
+// eslint-disable-next-line
 function sleep(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -17,33 +17,26 @@ async function check(browser, term, crn) {
 	await page.goto(`https://central.carleton.ca/prod/bwysched.p_select_term?wsea_code=EXT`);
 	await page.select(`#term_code`, term);
 
-	await sleep(2000);
 	await Promise.all([
 		page.waitForNavigation(),
 		await page.click(`input[type="submit"]`),
 	]);
 
-	await sleep(2000);
-
 	await page.$eval(`#crn_id`, (el, value) => el.value = value, crn);
 
-	await sleep(2000);
 	await Promise.all([
 		page.waitForNavigation(),
 		await page.click(`input[value="Search"]`),
 	]);
-
-	await sleep(2000);
 
 	const msg = await page.$eval(`table tr:nth-child(4) td:nth-child(2)`, el => el.textContent);
 	const courseCode = (await page.$eval(`table tr:nth-child(4) td:nth-child(4)`, el => el.textContent)).trim();
 
 	await page.close();
 	return [msg, courseCode];
-};
+}
 
-async function processCourses(bot, browser)
-{
+async function processCourses(bot, browser) {
 	Object.keys(courses).forEach(term => {
 		courses[term].forEach(async course => {
 			const [currentStatus, courseName] = await check(browser, term, course.code);
@@ -56,27 +49,28 @@ async function processCourses(bot, browser)
 				course.status = currentStatus;
 				fsp.writeFile(coursesFile, JSON.stringify(courses));
 			}
-		})
-	})
+		});
+	});
 }
 
 (async () => {
-	const rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout,
+	process.once(`SIGTERM`, () => {
+		console.log(`SIGTERM recieved`);
+		process.exit(0);
 	});
 
-	rl.on(`line`, (msg) => {
-		if (msg == `q`) { process.exit(0); }
+	process.once(`SIGINT`, () => {
+		console.log(`SIGINT recieved`);
+		process.exit(0);
 	});
 
 	const resetFlag = process.argv.slice(2)[0];
-	if (resetFlag === "--reset") {
+	if (resetFlag === `--reset`) {
 		Object.values(courses).forEach(term => {
 			term.forEach(course => {
-				course.status = "";
-			})
-		})
+				course.status = ``;
+			});
+		});
 		fsp.writeFile(coursesFile, JSON.stringify(courses));
 	}
 
@@ -95,7 +89,7 @@ async function processCourses(bot, browser)
 	await processCourses(bot, browser);
 
 	setInterval(async () => {
-		await processCourses(bot, browser)
+		await processCourses(bot, browser);
 	}, timeoutMins * 60000);
 
 })().catch(e => console.error(e));
