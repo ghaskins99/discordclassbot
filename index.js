@@ -58,7 +58,12 @@ async function processCourses(bot, browser) {
       console.log(`${new Date().toISOString()}: ${currentStatus}`);
       if (currentStatus != course.status) {
         console.log(`Sending new status ${courseName}: ${currentStatus}`);
-        await bot.sendSuccessMessage(course.status, currentStatus, courseName);
+        await bot.sendSuccessMessage(
+          course.status,
+          currentStatus,
+          courseName,
+          course.user
+        );
         course.status = currentStatus;
         fsp.writeFile(coursesFile, JSON.stringify(courses));
       }
@@ -89,13 +94,13 @@ async function processCourses(bot, browser) {
 
   const bot = new ClassBot();
   await bot.initBot();
-   const browser = await puppeteer.launch({ args: [ `--no-sandbox` ] });
-//  const browser = await puppeteer.launch({
-//    executablePath:
-//      "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-//    headless: false,
-//    args: ["--auto-open-devtools-for-tabs"],
-//  });
+  const browser = await puppeteer.launch({ args: [`--no-sandbox`] });
+  //  const browser = await puppeteer.launch({
+  //    executablePath:
+  //      "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+  //    headless: false,
+  //    args: ["--auto-open-devtools-for-tabs"],
+  //  });
   console.log(`startup ok`);
 
   await processCourses(bot, browser);
