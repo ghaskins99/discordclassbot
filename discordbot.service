@@ -1,0 +1,9 @@
+[Unit]
+Description=Turn on discord bot
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/node /home/cagray180/discordclassbot/index.js
+
+[Install]
+WantedBy=multi-user.target
