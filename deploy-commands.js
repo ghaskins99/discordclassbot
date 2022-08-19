@@ -1,4 +1,4 @@
-import commands from "./util/commands";
+import commands from "./util/commands.js";
 import { REST, Routes } from "discord.js";
 import { readConfig } from "./util/general.js";
 

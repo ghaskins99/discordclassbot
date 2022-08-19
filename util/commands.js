@@ -18,7 +18,7 @@ const commands = [
 			{
 				type: ApplicationCommandOptionType.String,
 				name: `semester`,
-				description: `Semester: one of [w, s, f] + last 2 digits of year, i.e., w22, s22, f22`,
+				description: `Semester: one of [w, s, f] + last 2 digits of year, i.e., w23, s22, f22`,
 				required: true,
 			},
 		],
