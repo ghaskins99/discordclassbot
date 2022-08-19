@@ -1,16 +1,27 @@
 {
-  "name": "discordclassbot",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "discord.js": "^13.6.0",
-    "puppeteer": "^13.5.2"
-  }
+	"name": "discordclassbot",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"deploy": "node --experimental-json-modules deploy-commands.js"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"discord.js": "^14.2.0",
+		"puppeteer": "^13.5.2"
+	},
+	"type": "module",
+	"private": true,
+	"devDependencies": {
+		"eslint": "^8.2.0",
+		"eslint-config-prettier": "^8.5.0",
+		"eslint-plugin-node": "^11.1.0",
+		"eslint-plugin-prettier": "^4.2.1",
+		"eslint-plugin-sort-requires": "^2.1.0",
+		"prettier": "^2.7.1"
+	}
 }
