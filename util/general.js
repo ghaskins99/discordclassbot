@@ -1,22 +1,35 @@
 import { promises as fsp } from "fs";
 
-const coursesFile = `./courses.json`;
-const botconfigFile = `./botconfig.json`;
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const coursesFile = `courses.json`;
+const botconfigFile = `botconfig.json`;
 
 export function sleep(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export const readCourses = async () => {
-	const data = await fsp.readFile(coursesFile, `utf-8`);
+	const data = await fsp.readFile(join(__dirname, `..`, coursesFile), `utf-8`);
 	return JSON.parse(data);
 };
 
 export const writeCourses = async courses =>
-	fsp.writeFile(coursesFile, JSON.stringify(courses), `utf-8`);
+	fsp.writeFile(
+		join(__dirname, `..`, coursesFile),
+		JSON.stringify(courses),
+		`utf-8`
+	);
 
 export const readConfig = async () => {
-	const data = await fsp.readFile(botconfigFile, `utf-8`);
+	const data = await fsp.readFile(
+		join(__dirname, `..`, botconfigFile),
+		`utf-8`
+	);
 	return JSON.parse(data);
 };
 
